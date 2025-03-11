@@ -1,1768 +1,198 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokémon Battle Royale</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --pokemon-red: #EE1515;
-            --pokemon-blue: #3B4CCA;
-            --pokemon-yellow: #FFDE00;
-            --pokemon-light-yellow: #FFEA85;
-            --pokemon-dark-blue: #2A3A99;
-            --high-score: #4CAF50;
-            --mid-score: #FFC107;
-            --low-score: #F44336;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, var(--pokemon-blue) 0%, var(--pokemon-dark-blue) 100%);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/><circle cx="50" cy="50" r="20" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/><line x1="50" y1="10" x2="50" y2="90" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><line x1="10" y1="50" x2="90" y2="50" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>');
-            background-size: 200px 200px;
-            opacity: 0.3;
-            z-index: -1;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            animation: fadeIn 1s ease-in-out;
-            position: relative;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            color: var(--pokemon-yellow);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 10px;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            color: var(--pokemon-light-yellow);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Menú hamburguesa */
-        .hamburger-menu {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            cursor: pointer;
-        }
-
-        .hamburger-icon {
-            width: 40px;
-            height: 40px;
-            background-color: var(--pokemon-yellow);
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .hamburger-icon:hover {
-            transform: scale(1.1);
-        }
-
-        .hamburger-icon span {
-            display: block;
-            width: 20px;
-            height: 3px;
-            background-color: var(--pokemon-blue);
-            margin: 2px 0;
-            border-radius: 3px;
-            transition: all 0.3s ease;
-        }
-
-        .hamburger-icon.active span:nth-child(1) {
-            transform: translateY(7px) rotate(45deg);
-        }
-
-        .hamburger-icon.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .hamburger-icon.active span:nth-child(3) {
-            transform: translateY(-7px) rotate(-45deg);
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -300px;
-            width: 300px;
-            height: 100%;
-            background: rgba(43, 57, 144, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 999;
-            transition: all 0.4s ease;
-            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
-            padding: 80px 20px 20px;
-            overflow-y: auto;
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .sidebar-title {
-            color: var(--pokemon-yellow);
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            margin-top: 30px;
-        }
-
-        .sidebar-menu-item {
-            margin-bottom: 15px;
-        }
-
-        .sidebar-btn {
-            background-color: var(--pokemon-yellow);
-            color: var(--pokemon-blue);
-            border: none;
-            border-radius: 30px;
-            padding: 12px 25px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .sidebar-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-            background-color: var(--pokemon-light-yellow);
-        }
-
-        .sidebar-btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-icon {
-            width: 20px;
-            height: 20px;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        /* Botón de inicio */
-        .start-btn {
-            background-color: var(--pokemon-red);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-top: 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            animation: pulse 2s infinite;
-        }
-
-        .start-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .start-btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Área de batalla y rankings laterales */
-        .battle-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            gap: 20px;
-        }
-
-        .top-rankings {
-            width: 200px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-        }
-
-        .top-rankings-title {
-            text-align: center;
-            color: var(--pokemon-yellow);
-            font-size: 1rem;
-            margin-bottom: 10px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Mejorar el estilo de los divs que funcionan como botones */
-        .top-pokemon-card {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: all 0.3s ease;
-            position: relative;
-            cursor: pointer;
-            margin-bottom: 10px; /* Añadir espacio entre tarjetas */
-        }
-
-        .top-pokemon-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .top-pokemon-name {
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 5px;
-            text-transform: capitalize;
-            width: 100%; /* Usar todo el ancho disponible */
-            overflow: hidden;
-            text-overflow: ellipsis; /* Añadir puntos suspensivos si el texto es demasiado largo */
-        }
-
-        .top-pokemon-img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            margin-bottom: 5px;
-        }
-
-        .top-pokemon-points {
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 10px;
-            color: white;
-        }
-
-        /* Pokemon Preview Popup */
-        .pokemon-preview {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .pokemon-preview.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Modificar el estilo de la vista previa para que la descripción no se vea cortada */
-        .preview-content {
-            position: relative;
-            max-width: 90%;
-            width: 600px; /* Aumentado el ancho para mejor visualización */
-            background: linear-gradient(145deg, var(--pokemon-blue) 0%, var(--pokemon-dark-blue) 100%);
-            border-radius: 20px;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            animation: scaleIn 0.3s ease forwards;
-            overflow: visible; /* Asegurar que el contenido no se corte */
-        }
-
-        .preview-img-container {
-            width: 250px;
-            height: 250px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .preview-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            animation: float 3s ease-in-out infinite;
-            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.4));
-        }
-
-        .preview-info {
-            text-align: center;
-        }
-
-        .preview-name {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--pokemon-yellow);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 10px;
-        }
-
-        /* Modificar el estilo de la vista previa para que la descripción no se vea cortada */
-        .preview-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 20px 0;
-            text-align: left;
-            width: 100%; /* Usar todo el ancho disponible */
-            padding: 0 20px;
-        }
-
-        .preview-stat {
-            font-size: 1.1rem;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 15px;
-            border-radius: 8px;
-            word-wrap: break-word; /* Permitir que el texto se ajuste */
-            overflow-wrap: break-word;
-        }
-
-        .preview-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background-color: rgba(255, 255, 255, 0.2);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 10; /* Increased z-index */
-        }
-
-        .preview-close:hover {
-            background-color: rgba(255, 255, 255, 0.4);
-            transform: rotate(90deg);
-        }
-
-        .battle-area {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            flex: 1;
-        }
-
-        /* Ajustar el margen inferior de las tarjetas de Pokémon para los contadores */
-        .pokemon-card {
-            background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-            width: 280px;
-            height: 380px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            overflow: visible; /* Cambiar a visible para que el contador se vea */
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 30px; /* Espacio para el contador */
-        }
-
-        .pokemon-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-        }
-
-        .pokemon-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, rgba(255, 222, 0, 0.2) 0%, transparent 70%);
-            z-index: 0;
-        }
-
-        .pokemon-image-container {
-            width: 200px;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .pokemon-image {
-            width: 180px;
-            height: 180px;
-            object-fit: contain;
-            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
-            transition: transform 0.5s ease;
-            animation: float 3s ease-in-out infinite;
-            z-index: 1;
-        }
-
-        .pokemon-card:nth-child(even) .pokemon-image {
-            animation-delay: 1.5s;
-        }
-
-        .pokemon-info {
-            text-align: center;
-            color: #333;
-            z-index: 1;
-            width: 100%;
-        }
-
-        .pokemon-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: var(--pokemon-blue);
-            text-transform: capitalize;
-        }
-
-        .pokemon-points {
-            font-size: 1.2rem;
-            font-weight: 600;
-            padding: 5px 15px;
-            border-radius: 20px;
-            color: white;
-            display: inline-block;
-            margin-top: 10px;
-        }
-
-        /* Modificar el estilo de los contadores para que estén debajo de los contenedores */
-        .win-counter {
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--pokemon-red);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-            z-index: 2;
-        }
-
-        .winner {
-            position: relative;
-            animation: winner 1s ease forwards;
-            box-shadow: 0 0 30px rgba(76, 175, 80, 0.7);
-            border: 3px solid var(--high-score);
-        }
-
-        .winner .pokemon-image {
-            animation: jump 1s ease forwards !important;
-        }
-
-        .vs-badge {
-            background-color: var(--pokemon-red);
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 50%;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-            position: relative;
-            z-index: 2;
-            animation: pulse 2s infinite;
-        }
-
-        /* Rankings */
-        .rankings {
-            margin-top: 40px;
-        }
-
-        .ranking-column {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .ranking-title {
-            text-align: center;
-            color: var(--pokemon-yellow);
-            font-size: 1.3rem;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            position: sticky;
-            top: 0;
-            background: rgba(59, 76, 202, 0.8);
-            padding: 10px;
-            border-radius: 10px;
-            z-index: 2;
-        }
-
-        .ranking-list {
-            list-style: none;
-            margin-top: 15px;
-        }
-
-        .ranking-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            transition: background-color 0.3s ease;
-        }
-
-        .ranking-item:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .ranking-name {
-            text-transform: capitalize;
-            font-weight: 600;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--pokemon-yellow);
-            animation: spin 1s ease-in-out infinite;
-            margin: 0 auto;
-        }
-
-        /* Social Media Footer */
-        .social-footer {
-            margin-top: 40px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            border-radius: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .social-title {
-            color: var(--pokemon-yellow);
-            font-size: 1.2rem;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        .social-links {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .social-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 15px;
-            border-radius: 30px;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .social-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .social-icon {
-            width: 24px;
-            height: 24px;
-        }
-
-        /* Notificaciones y Modales */
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--pokemon-blue);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            text-align: center;
-        }
-
-        .notification.show {
-            opacity: 1;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            color: #333;
-            text-align: center;
-            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-title {
-            color: var(--pokemon-blue);
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-        }
-
-        .modal-text {
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .modal-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .modal-btn-primary {
-            background-color: var(--pokemon-blue);
-            color: white;
-            border: none;
-        }
-
-        .modal-btn-secondary {
-            background-color: #f0f0f0;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-
-        .modal-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Overlay para cuando el menú está abierto */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 998;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Animaciones */
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-            }
-            50% {
-                transform: scale(1.1);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-            }
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes winner {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-            100% {
-                transform: scale(1.05);
-            }
-        }
-
-        @keyframes jump {
-            0% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-30px);
-            }
-            75% {
-                transform: translateY(-15px);
-            }
-            100% {
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes scaleIn {
-            from {
-                transform: scale(0.8);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 1100px) {
-            .battle-container {
-                flex-direction: column;
-            }
-            
-            .top-rankings {
-                width: 100%;
-                max-width: 500px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .top-pokemon-card {
-                width: calc(20% - 10px);
-                min-width: 80px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            h2 {
-                font-size: 1.2rem;
-            }
-            
-            .battle-area {
-                flex-direction: column;
-            }
-            
-            .vs-badge {
-                margin: -20px 0;
-            }
-            
-            .pokemon-card {
-                width: 250px;
-                height: 340px;
-            }
-            
-            .pokemon-image {
-                width: 150px;
-                height: 150px;
-            }
-            
-            .top-pokemon-card {
-                width: calc(33.33% - 10px);
-            }
-            
-            .social-links {
-                flex-direction: column;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokémon Battle Royale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Menú Hamburguesa -->
-    <div class="hamburger-menu">
-        <div class="hamburger-icon">
-            <span></span>
-            <span></span>
-            <span></span>
+  <!-- Menú Hamburguesa -->
+  <div class="hamburger-menu">
+    <div class="hamburger-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3 class="sidebar-title">Opciones</h3>
+    <ul class="sidebar-menu">
+      <li class="sidebar-menu-item">
+        <button id="export-btn" class="sidebar-btn">
+          <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Exportar Rankings
+        </button>
+      </li>
+      <li class="sidebar-menu-item">
+        <div class="import-container">
+          <button id="import-btn" class="sidebar-btn">
+            <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Importar Rankings
+          </button>
+          <input type="file" id="file-input" accept=".json" class="file-input" />
         </div>
+      </li>
+      <li class="sidebar-menu-item">
+        <button id="reset-stage-btn" class="sidebar-btn">
+          <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <polyline points="23 20 23 14 17 14"></polyline>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+          </svg>
+          Reiniciar Etapa
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Overlay para cuando el menú está abierto -->
+  <div class="overlay"></div>
+
+  <!-- Pokemon Preview Popup -->
+  <div id="pokemon-preview" class="pokemon-preview">
+    <div class="preview-content">
+      <div class="preview-close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+      <div class="preview-img-container">
+        <img id="preview-img" src="/placeholder.svg" alt="Pokemon" class="preview-img">
+      </div>
+      <div class="preview-info">
+        <h3 id="preview-name" class="preview-name">Nombre del Pokémon</h3>
+        <div class="preview-stats">
+          <p id="preview-points" class="preview-stat">Puntos: 1000</p>
+          <p id="preview-rank" class="preview-stat">Ranking: #0</p>
+          <p id="preview-battles" class="preview-stat">Batallas: 0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Batalla Royale Pokémon</h1>
+      <h2>¿Qué Pokémon prefieres?</h2>
+      <div class="stage-info">
+        <h3>Etapa: <span id="current-stage">1</span> de <span id="total-stages">1</span></h3>
+        <div class="progress-bar">
+          <div id="stage-progress" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+      <button id="start-game-btn" class="start-btn">Comenzar Batalla</button>
+    </header>
+
+    <div id="battle-container" class="battle-container" style="display: none;">
+      <!-- Top 5 Mejores -->
+      <div class="top-rankings">
+        <h3 class="top-rankings-title">Top 5 Mejores</h3>
+        <div id="top-best" class="top-rankings-content">
+          <!-- Se llenará dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Área de Batalla -->
+      <div class="battle-area">
+        <div id="pokemon1" class="pokemon-card">
+          <div class="pokemon-image-container">
+            <div class="loading-spinner"></div>
+          </div>
+          <div class="pokemon-info">
+            <div class="pokemon-name">Cargando...</div>
+            <div class="pokemon-points">1000 pts</div>
+          </div>
+          <div id="left-counter" class="win-counter">0</div>
+        </div>
+
+        <div class="vs-badge">VS</div>
+
+        <div id="pokemon2" class="pokemon-card">
+          <div class="pokemon-image-container">
+            <div class="loading-spinner"></div>
+          </div>
+          <div class="pokemon-info">
+            <div class="pokemon-name">Cargando...</div>
+            <div class="pokemon-points">1000 pts</div>
+          </div>
+          <div id="right-counter" class="win-counter">0</div>
+        </div>
+      </div>
+
+      <!-- Top 5 Peores -->
+      <div class="top-rankings">
+        <h3 class="top-rankings-title">Top 5 Peores</h3>
+        <div id="top-worst" class="top-rankings-content">
+          <!-- Se llenará dinámicamente -->
+        </div>
+      </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h3 class="sidebar-title">Opciones</h3>
-        <ul class="sidebar-menu">
-            <li class="sidebar-menu-item">
-                <button id="export-btn" class="sidebar-btn">
-                    <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Exportar Rankings
-                </button>
-            </li>
-            <li class="sidebar-menu-item">
-                <div class="import-container">
-                    <button id="import-btn" class="sidebar-btn">
-                        <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        Importar Rankings
-                    </button>
-                    <input type="file" id="file-input" accept=".json" class="file-input" />
-                </div>
-            </li>
+    <div id="rankings-container" class="rankings" style="display: none;">
+      <div class="ranking-column">
+        <h3 class="ranking-title">Todos los Pokémon</h3>
+        <ul id="all-rankings" class="ranking-list">
+          <li class="ranking-item">
+            <span class="ranking-name">Cargando rankings...</span>
+            <span class="ranking-points"></span>
+          </li>
         </ul>
+      </div>
     </div>
 
-    <!-- Overlay para cuando el menú está abierto -->
-    <div class="overlay"></div>
-
-    <!-- Pokemon Preview Popup -->
-    <div id="pokemon-preview" class="pokemon-preview">
-        <div class="preview-content">
-            <div class="preview-close">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </div>
-            <div class="preview-img-container">
-                <img id="preview-img" src="/placeholder.svg" alt="Pokemon" class="preview-img">
-            </div>
-            <div class="preview-info">
-                <h3 id="preview-name" class="preview-name">Nombre del Pokémon</h3>
-                <div class="preview-stats">
-                    <p id="preview-points" class="preview-stat">Puntos: 1000</p>
-                    <p id="preview-rank" class="preview-stat">Ranking: #0</p>
-                    <p id="preview-battles" class="preview-stat">Batallas: 0</p>
-                    <p id="preview-types" class="preview-stat">Tipo: Desconocido</p>
-                    <p id="preview-height" class="preview-stat">Altura: -- m</p>
-                    <p id="preview-weight" class="preview-stat">Peso: -- kg</p>
-                    <p id="preview-ability" class="preview-stat">Habilidad: --</p>
-                </div>
-            </div>
-        </div>
+    <!-- Footer con enlaces a redes sociales -->
+    <div class="social-footer">
+      <h3 class="social-title">¡Síguenos en redes sociales!</h3>
+      <div class="social-links">
+        <a href="https://www.youtube.com/@Menymanito" target="_blank" class="social-link">
+          <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+            <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+          </svg>
+          Menymanito
+        </a>
+        <a href="https://www.tiktok.com/@meny.manito" target="_blank" class="social-link">
+          <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
+            <path d="M15 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path>
+            <path d="M15 8v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-4a4 4 0 0 1 4-4h8"></path>
+          </svg>
+          meny.manito
+        </a>
+      </div>
     </div>
+  </div>
 
-    <div class="container">
-        <header>
-            <h1>Batalla Royale Pokémon</h1>
-            <h2>¿Qué Pokémon prefieres?</h2>
-            <button id="start-game-btn" class="start-btn">Comenzar Batalla</button>
-        </header>
+  <div id="notification" class="notification">Mensaje de notificación</div>
 
-        <div id="battle-container" class="battle-container" style="display: none;">
-            <!-- Top 5 Mejores -->
-            <div class="top-rankings">
-                <h3 class="top-rankings-title">Top 5 Mejores</h3>
-                <div id="top-best" class="top-rankings-content">
-                    <!-- Se llenará dinámicamente -->
-                </div>
-            </div>
-
-            <!-- Área de Batalla -->
-            <div class="battle-area">
-                <div id="pokemon1" class="pokemon-card">
-                    <div class="pokemon-image-container">
-                        <div class="loading-spinner"></div>
-                    </div>
-                    <div class="pokemon-info">
-                        <div class="pokemon-name">Cargando...</div>
-                        <div class="pokemon-points">1000 pts</div>
-                    </div>
-                    <div id="left-counter" class="win-counter">0</div>
-                </div>
-
-                <div class="vs-badge">VS</div>
-
-                <div id="pokemon2" class="pokemon-card">
-                    <div class="pokemon-image-container">
-                        <div class="loading-spinner"></div>
-                    </div>
-                    <div class="pokemon-info">
-                        <div class="pokemon-name">Cargando...</div>
-                        <div class="pokemon-points">1000 pts</div>
-                    </div>
-                    <div id="right-counter" class="win-counter">0</div>
-                </div>
-            </div>
-
-            <!-- Top 5 Peores -->
-            <div class="top-rankings">
-                <h3 class="top-rankings-title">Top 5 Peores</h3>
-                <div id="top-worst" class="top-rankings-content">
-                    <!-- Se llenará dinámicamente -->
-                </div>
-            </div>
-        </div>
-
-        <div id="rankings-container" class="rankings" style="display: none;">
-            <div class="ranking-column">
-                <h3 class="ranking-title">Todos los Pokémon</h3>
-                <ul id="all-rankings" class="ranking-list">
-                    <li class="ranking-item">
-                        <span class="ranking-name">Cargando rankings...</span>
-                        <span class="ranking-points"></span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Footer con enlaces a redes sociales -->
-        <div class="social-footer">
-            <h3 class="social-title">¡Síguenos en redes sociales!</h3>
-            <div class="social-links">
-                <a href="https://www.youtube.com/@Menymanito" target="_blank" class="social-link">
-                    <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
-                        <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
-                    </svg>
-                    Menymanito
-                </a>
-                <a href="https://www.tiktok.com/@meny.manito" target="_blank" class="social-link">
-                    <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 12a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
-                        <path d="M15 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path>
-                        <path d="M15 8v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-4a4 4 0 0 1 4-4h8"></path>
-                    </svg>
-                    meny.manito
-                </a>
-            </div>
-        </div>
+  <div id="import-modal" class="modal">
+    <div class="modal-content">
+      <h3 class="modal-title">Importar Rankings</h3>
+      <p class="modal-text">¿Deseas reemplazar tus rankings actuales con los del archivo importado o combinarlos?</p>
+      <div class="modal-buttons">
+        <button id="replace-btn" class="modal-btn modal-btn-primary">Reemplazar</button>
+        <button id="merge-btn" class="modal-btn modal-btn-primary">Combinar</button>
+        <button id="cancel-import-btn" class="modal-btn modal-btn-secondary">Cancelar</button>
+      </div>
     </div>
+  </div>
 
-    <div id="notification" class="notification">Mensaje de notificación</div>
-
-    <div id="import-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="modal-title">Importar Rankings</h3>
-            <p class="modal-text">¿Deseas reemplazar tus rankings actuales con los del archivo importado o combinarlos?</p>
-            <div class="modal-buttons">
-                <button id="replace-btn" class="modal-btn modal-btn-primary">Reemplazar</button>
-                <button id="merge-btn" class="modal-btn modal-btn-primary">Combinar</button>
-                <button id="cancel-import-btn" class="modal-btn modal-btn-secondary">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Estado del juego
-        const gameState = {
-            currentPokemon: [],
-            rankings: {},
-            pokemonData: {}, // Almacena datos adicionales como imagen, nombre en español, etc.
-            isSelecting: false,
-            importedRankings: null,
-            topBest: [],
-            topWorst: [],
-            leftWins: 0,  // Contador de victorias izquierda
-            rightWins: 0, // Contador de victorias derecha
-            timestamps: {}, // Para guardar cuándo se agregó cada Pokémon al ranking
-            gameStarted: false // Para controlar si el juego ha comenzado
-        };
-
-        // Elementos del DOM
-        const pokemon1Element = document.getElementById('pokemon1');
-        const pokemon2Element = document.getElementById('pokemon2');
-        const allRankingsElement = document.getElementById('all-rankings');
-        const topBestElement = document.getElementById('top-best');
-        const topWorstElement = document.getElementById('top-worst');
-        const leftCounterElement = document.getElementById('left-counter');
-        const rightCounterElement = document.getElementById('right-counter');
-        const exportBtn = document.getElementById('export-btn');
-        const importBtn = document.getElementById('import-btn');
-        const fileInput = document.getElementById('file-input');
-        const notification = document.getElementById('notification');
-        const importModal = document.getElementById('import-modal');
-        const replaceBtn = document.getElementById('replace-btn');
-        const mergeBtn = document.getElementById('merge-btn');
-        const cancelImportBtn = document.getElementById('cancel-import-btn');
-        const hamburgerIcon = document.querySelector('.hamburger-icon');
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.querySelector('.overlay');
-        const pokemonPreview = document.getElementById('pokemon-preview');
-        const previewImg = document.getElementById('preview-img');
-        const previewName = document.getElementById('preview-name');
-        const previewPoints = document.getElementById('preview-points');
-        const previewRank = document.getElementById('preview-rank');
-        const previewBattles = document.getElementById('preview-battles');
-        const previewClose = document.querySelector('.preview-close');
-        const startGameBtn = document.getElementById('start-game-btn');
-        const battleContainer = document.getElementById('battle-container');
-        const rankingsContainer = document.getElementById('rankings-container');
-
-        // Inicializar el juego
-        function initGame() {
-            // Añadir event listeners
-            startGameBtn.addEventListener('click', startGame);
-            exportBtn.addEventListener('click', exportRankings);
-            importBtn.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', handleFileSelect);
-            replaceBtn.addEventListener('click', () => importRankings(true));
-            mergeBtn.addEventListener('click', () => importRankings(false));
-            cancelImportBtn.addEventListener('click', () => {
-                importModal.style.display = 'none';
-                gameState.importedRankings = null;
-            });
-            
-            // Event listeners para el menú hamburguesa
-            hamburgerIcon.addEventListener('click', toggleSidebar);
-            overlay.addEventListener('click', closeSidebar);
-            
-            // Event listener para cerrar la vista previa del Pokémon
-            document.querySelector('.preview-close').addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevenir que el click se propague
-                closePokemonPreview();
-            });
-            
-            // Asegurar que el evento de click en el fondo también cierre la vista previa
-            pokemonPreview.addEventListener('click', (e) => {
-                if (e.target === pokemonPreview) {
-                    closePokemonPreview();
-                }
-            });
-        }
-
-        // Iniciar el juego
-        async function startGame() {
-            if (gameState.gameStarted) return;
-            
-            gameState.gameStarted = true;
-            startGameBtn.style.display = 'none';
-            battleContainer.style.display = 'flex';
-            rankingsContainer.style.display = 'block';
-            
-            // Cargar Pokémon iniciales
-            await loadNewPokemonPair();
-            
-            // Actualizar contadores
-            updateCounters();
-            
-            // Añadir event listeners para las cartas
-            pokemon1Element.addEventListener('click', () => selectPokemon(0, 1));
-            pokemon2Element.addEventListener('click', () => selectPokemon(1, 0));
-        }
-
-        // Abrir/cerrar el menú lateral
-        function toggleSidebar() {
-            hamburgerIcon.classList.toggle('active');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        // Cerrar el menú lateral
-        function closeSidebar() {
-            hamburgerIcon.classList.remove('active');
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-
-        // Mostrar la vista previa de un Pokémon
-        async function showPokemonPreview(pokemon) {
-            previewImg.src = pokemon.image;
-            previewName.textContent = pokemon.name;
-            previewPoints.textContent = `Puntos: ${pokemon.points}`;
-            
-            // Buscar el ranking del Pokémon
-            const rankingsArray = Object.entries(gameState.rankings).map(([name, points]) => ({ name, points }));
-            const sortedRankings = [...rankingsArray].sort((a, b) => b.points - a.points);
-            const rank = sortedRankings.findIndex(p => p.name === pokemon.englishName) + 1;
-            
-            previewRank.textContent = `Ranking: #${rank}`;
-            
-            // Mostrar número de batallas si está disponible
-            const battles = pokemon.battles || 0;
-            previewBattles.textContent = `Batallas: ${battles}`;
-            
-            // Limpiar datos anteriores mientras se cargan los nuevos
-            document.getElementById('preview-types').textContent = 'Tipo: Cargando...';
-            document.getElementById('preview-height').textContent = 'Altura: Cargando...';
-            document.getElementById('preview-weight').textContent = 'Peso: Cargando...';
-            document.getElementById('preview-ability').textContent = 'Habilidad: Cargando...';
-            
-            // Mostrar la vista previa inmediatamente
-            pokemonPreview.classList.add('active');
-            
-            // Intentar obtener datos adicionales de la API
-            try {
-                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.englishName}`);
-                const data = await response.json();
-                
-                // Mostrar tipos
-                const types = data.types.map(type => {
-                    // Traducir tipos al español
-                    const typeTranslations = {
-                        normal: "Normal", fire: "Fuego", water: "Agua", electric: "Eléctrico", 
-                        grass: "Planta", ice: "Hielo", fighting: "Lucha", poison: "Veneno", 
-                        ground: "Tierra", flying: "Volador", psychic: "Psíquico", bug: "Bicho", 
-                        rock: "Roca", ghost: "Fantasma", dragon: "Dragón", dark: "Siniestro", 
-                        steel: "Acero", fairy: "Hada"
-                    };
-                    return typeTranslations[type.type.name] || type.type.name;
-                }).join(", ");
-                document.getElementById('preview-types').textContent = `Tipo: ${types}`;
-                
-                // Mostrar altura y peso
-                const height = (data.height / 10).toFixed(1); // Convertir a metros
-                const weight = (data.weight / 10).toFixed(1); // Convertir a kg
-                document.getElementById('preview-height').textContent = `Altura: ${height} m`;
-                document.getElementById('preview-weight').textContent = `Peso: ${weight} kg`;
-                
-                // Mostrar habilidad principal
-                if (data.abilities && data.abilities.length > 0) {
-                    // Intentar obtener el nombre de la habilidad en español
-                    try {
-                        const abilityResponse = await fetch(data.abilities[0].ability.url);
-                        const abilityData = await abilityResponse.json();
-                        const spanishAbility = abilityData.names.find(name => name.language.name === 'es');
-                        document.getElementById('preview-ability').textContent = `Habilidad: ${spanishAbility ? spanishAbility.name : data.abilities[0].ability.name}`;
-                    } catch (error) {
-                        document.getElementById('preview-ability').textContent = `Habilidad: ${data.abilities[0].ability.name}`;
-                    }
-                } else {
-                    document.getElementById('preview-ability').textContent = 'Habilidad: Desconocida';
-                }
-            } catch (error) {
-                console.error('Error obteniendo datos adicionales:', error);
-                document.getElementById('preview-types').textContent = 'Tipo: Desconocido';
-                document.getElementById('preview-height').textContent = 'Altura: -- m';
-                document.getElementById('preview-weight').textContent = 'Peso: -- kg';
-                document.getElementById('preview-ability').textContent = 'Habilidad: Desconocida';
-            }
-        }
-
-        // Cerrar la vista previa del Pokémon
-        function closePokemonPreview() {
-            pokemonPreview.classList.remove('active');
-        }
-
-        // Actualizar contadores de victorias
-        function updateCounters() {
-            leftCounterElement.textContent = gameState.leftWins;
-            rightCounterElement.textContent = gameState.rightWins;
-        }
-
-        // Obtener Pokémon aleatorio de la API
-        async function fetchRandomPokemon() {
-            // Obtener un ID aleatorio entre 1 y 898 (número total de Pokémon)
-            const randomId = Math.floor(Math.random() * 898) + 1;
-            
-            try {
-                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
-                const data = await response.json();
-                
-                // Obtener el nombre en español
-                let spanishName = data.name;
-                try {
-                    const speciesResponse = await fetch(data.species.url);
-                    const speciesData = await speciesResponse.json();
-                    const spanishNameData = speciesData.names.find(name => name.language.name === 'es');
-                    if (spanishNameData) {
-                        spanishName = spanishNameData.name;
-                    }
-                } catch (error) {
-                    console.error('Error obteniendo el nombre en español:', error);
-                }
-                
-                // Crear objeto Pokémon
-                const pokemon = {
-                    id: data.id,
-                    name: spanishName,
-                    englishName: data.name,
-                    image: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
-                    points: gameState.rankings[data.name] || 1000,
-                    battles: 0,
-                    timestamp: Date.now(),
-                    types: data.types.map(type => type.type.name),
-                    height: data.height / 10, // Convertir a metros
-                    weight: data.weight / 10 // Convertir a kg
-                };
-                
-                // Añadir a rankings si no está ya
-                if (!gameState.rankings[data.name]) {
-                    gameState.rankings[data.name] = 1000;
-                    gameState.timestamps[data.name] = Date.now();
-                }
-                
-                // Guardar datos adicionales del Pokémon
-                gameState.pokemonData[data.name] = {
-                    spanishName: spanishName,
-                    image: pokemon.image,
-                    battles: gameState.pokemonData[data.name]?.battles || 0,
-                    types: pokemon.types,
-                    height: pokemon.height,
-                    weight: pokemon.weight
-                };
-                
-                return pokemon;
-            } catch (error) {
-                console.error('Error obteniendo Pokémon:', error);
-                return null;
-            }
-        }
-
-        // Cargar un nuevo par de Pokémon
-        async function loadNewPokemonPair() {
-            // Resetear estilos de tarjetas
-            pokemon1Element.classList.remove('winner');
-            pokemon2Element.classList.remove('winner');
-            
-            // Mostrar spinners de carga
-            pokemon1Element.querySelector('.pokemon-image-container').innerHTML = '<div class="loading-spinner"></div>';
-            pokemon2Element.querySelector('.pokemon-image-container').innerHTML = '<div class="loading-spinner"></div>';
-            
-            pokemon1Element.querySelector('.pokemon-name').textContent = 'Cargando...';
-            pokemon2Element.querySelector('.pokemon-name').textContent = 'Cargando...';
-            
-            // Obtener dos Pokémon aleatorios
-            const pokemon1 = await fetchRandomPokemon();
-            let pokemon2 = await fetchRandomPokemon();
-            
-            // Asegurarse de que no obtenemos el mismo Pokémon dos veces
-            while (pokemon2 && pokemon1.id === pokemon2.id) {
-                pokemon2 = await fetchRandomPokemon();
-            }
-            
-            // Almacenar Pokémon actuales
-            gameState.currentPokemon = [pokemon1, pokemon2];
-            
-            // Actualizar la UI
-            updatePokemonCard(pokemon1Element, pokemon1);
-            updatePokemonCard(pokemon2Element, pokemon2);
-            
-            // Actualizar rankings
-            updateRankingsDisplay();
-        }
-
-        // Actualizar una tarjeta de Pokémon con datos
-        function updatePokemonCard(cardElement, pokemon) {
-            const imageContainer = cardElement.querySelector('.pokemon-image-container');
-            const nameElement = cardElement.querySelector('.pokemon-name');
-            const pointsElement = cardElement.querySelector('.pokemon-points');
-            
-            // Actualizar imagen
-            imageContainer.innerHTML = `<img src="${pokemon.image}" alt="${pokemon.name}" class="pokemon-image">`;
-            
-            // Actualizar nombre y puntos
-            nameElement.textContent = pokemon.name;
-            pointsElement.textContent = `${pokemon.points} pts`;
-            
-            // Actualizar color de puntos
-            updatePointsColor(pointsElement, pokemon.points);
-        }
-
-        // Actualizar el color de los puntos basado en el valor
-        function updatePointsColor(element, points) {
-            // Escala de color basada en puntos
-            if (points >= 1500) {
-                element.style.backgroundColor = 'var(--high-score)';
-            } else if (points >= 800) {
-                element.style.backgroundColor = 'var(--mid-score)';
-            } else {
-                element.style.backgroundColor = 'var(--low-score)';
-            }
-        }
-
-        // Manejar selección de Pokémon
-        function selectPokemon(winnerIndex, loserIndex) {
-            // Prevenir múltiples selecciones mientras se anima
-            if (gameState.isSelecting) return;
-            gameState.isSelecting = true;
-            
-            const winner = gameState.currentPokemon[winnerIndex];
-            const loser = gameState.currentPokemon[loserIndex];
-            
-            // Incrementar contadores de victorias
-            if (winnerIndex === 0) {
-                gameState.leftWins++;
-            } else {
-                gameState.rightWins++;
-            }
-            
-            // Actualizar contadores en la UI
-            updateCounters();
-            
-            // Incrementar contador de batallas
-            if (gameState.pokemonData[winner.englishName]) {
-                gameState.pokemonData[winner.englishName].battles = (gameState.pokemonData[winner.englishName].battles || 0) + 1;
-            }
-            if (gameState.pokemonData[loser.englishName]) {
-                gameState.pokemonData[loser.englishName].battles = (gameState.pokemonData[loser.englishName].battles || 0) + 1;
-            }
-            
-            // Calcular puntos a transferir (máximo 50)
-            const pointDifference = winner.points - loser.points;
-            let pointsToTransfer;
-            
-            if (pointDifference > 0) {
-                // Ganador tiene más puntos:
-                // - Ganador gana menos puntos
-                // - Perdedor pierde más puntos
-                pointsToTransfer = Math.max(5, Math.floor(25 * (loser.points / winner.points)));
-            } else {
-                // Ganador tiene menos o igual puntos:
-                // - Ganador gana más puntos
-                // - Perdedor pierde menos puntos
-                pointsToTransfer = Math.min(50, Math.floor(25 * (winner.points / loser.points) + 25));
-            }
-            
-            // Actualizar puntos
-            gameState.rankings[winner.englishName] += pointsToTransfer;
-            gameState.rankings[loser.englishName] -= pointsToTransfer;
-            
-            // Actualizar puntos de Pokémon actuales
-            winner.points = gameState.rankings[winner.englishName];
-            loser.points = gameState.rankings[loser.englishName];
-            
-            // Actualizar UI
-            const winnerElement = winnerIndex === 0 ? pokemon1Element : pokemon2Element;
-            const loserElement = loserIndex === 0 ? pokemon1Element : pokemon2Element;
-            
-            // Actualizar visualización de puntos
-            winnerElement.querySelector('.pokemon-points').textContent = `${winner.points} pts`;
-            loserElement.querySelector('.pokemon-points').textContent = `${loser.points} pts`;
-            
-            // Actualizar colores de puntos
-            updatePointsColor(winnerElement.querySelector('.pokemon-points'), winner.points);
-            updatePointsColor(loserElement.querySelector('.pokemon-points'), loser.points);
-            
-            // Mostrar animación de ganador
-            winnerElement.classList.add('winner');
-            
-            // Actualizar visualización de rankings
-            updateRankingsDisplay();
-            
-            // Verificar si hay cambios en el top 5
-            checkTopRankings();
-            
-            // Cargar nuevos Pokémon después de un retraso
-            setTimeout(async () => {
-                await loadNewPokemonPair();
-                gameState.isSelecting = false;
-            }, 2000);
-        }
-
-        // Verificar si hay cambios en el top 5
-        function checkTopRankings() {
-            // Esta función ahora solo calcula los tops una vez y los actualiza en la UI
-            // Evitamos recalcular los tops cada vez que cambia un Pokémon
-            updateTopRankings();
-        }
-
-        // Actualizar visualización de top rankings
-        function updateTopRankings() {
-            // Convertir rankings a array para ordenar
-            const rankingsArray = Object.entries(gameState.rankings).map(([name, points]) => ({
-                name,
-                points,
-                timestamp: gameState.timestamps[name] || Date.now() // Si no hay timestamp, usar fecha actual
-            }));
-            
-            // Ordenar por puntos (descendente) y en caso de empate por timestamp (ascendente)
-            const topBest = [...rankingsArray]
-                .sort((a, b) => {
-                    if (b.points === a.points) {
-                        return a.timestamp - b.timestamp; // Los más antiguos tienen prioridad
-                    }
-                    return b.points - a.points;
-                })
-                .slice(0, 5);
-                
-            const topWorst = [...rankingsArray]
-                .sort((a, b) => {
-                    if (a.points === b.points) {
-                        return a.timestamp - b.timestamp; // Los más antiguos tienen prioridad
-                    }
-                    return a.points - b.points;
-                })
-                .slice(0, 5);
-            
-            // Actualizar la visualización
-            updateTopRankingsUI(topBestElement, topBest);
-            updateTopRankingsUI(topWorstElement, topWorst);
-        }
-
-        // Actualizar UI de los top rankings
-        function updateTopRankingsUI(element, rankings) {
-            element.innerHTML = '';
-            
-            rankings.forEach(async (pokemon) => {
-                // Obtener datos adicionales del Pokémon
-                const pokemonData = gameState.pokemonData[pokemon.name] || {};
-                let image = pokemonData.image;
-                let name = pokemonData.spanishName || pokemon.name;
-                
-                // Si no tenemos la imagen, intentar obtenerla
-                if (!image) {
-                    try {
-                        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.name}`);
-                        const data = await response.json();
-                        image = data.sprites.other['official-artwork'].front_default || data.sprites.front_default;
-                        
-                        // Guardar la imagen para uso futuro
-                        if (!gameState.pokemonData[pokemon.name]) {
-                            gameState.pokemonData[pokemon.name] = {
-                                spanishName: name,
-                                image: image,
-                                battles: 0
-                            };
-                        } else {
-                            gameState.pokemonData[pokemon.name].image = image;
-                        }
-                    } catch (error) {
-                        console.error('Error obteniendo imagen:', error);
-                        image = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-                    }
-                }
-                
-                const card = document.createElement('div');
-                card.className = 'top-pokemon-card';
-                card.innerHTML = `
-                    <img src="${image}" alt="${name}" class="top-pokemon-img">
-                    <div class="top-pokemon-name">${name}</div>
-                    <div class="top-pokemon-points" style="background-color: ${getPointsColor(pokemon.points)}">${pokemon.points} pts</div>
-                `;
-                
-                // Añadir event listener para mostrar la vista previa
-                card.addEventListener('click', () => {
-                    const fullPokemon = {
-                        name: name,
-                        englishName: pokemon.name,
-                        image: image,
-                        points: pokemon.points,
-                        battles: pokemonData.battles || 0
-                    };
-                    showPokemonPreview(fullPokemon);
-                });
-                
-                element.appendChild(card);
-            });
-        }
-
-        // Actualizar la visualización de rankings
-        function updateRankingsDisplay() {
-            // Convertir rankings a array para ordenar
-            const rankingsArray = Object.entries(gameState.rankings).map(([name, points]) => ({
-                name,
-                points,
-                spanishName: gameState.pokemonData[name]?.spanishName || name
-            }));
-            
-            // Ordenar por puntos (descendente)
-            const sortedRankings = [...rankingsArray].sort((a, b) => b.points - a.points);
-            
-            // Actualizar todos los rankings
-            allRankingsElement.innerHTML = sortedRankings.map((pokemon, index) => `
-                <li class="ranking-item">
-                    <span class="ranking-name">${index + 1}. ${pokemon.spanishName}</span>
-                    <span class="ranking-points" style="background-color: ${getPointsColor(pokemon.points)}">
-                        ${pokemon.points} pts
-                    </span>
-                </li>
-            `).join('');
-            
-            // Actualizar los tops solo si es necesario
-            updateTopRankings();
-        }
-
-        // Obtener color para puntos
-        function getPointsColor(points) {
-            if (points >= 1500) return 'var(--high-score)';
-            if (points >= 800) return 'var(--mid-score)';
-            return 'var(--low-score)';
-        }
-
-        // Exportar rankings a un archivo JSON
-        function exportRankings() {
-            // Crear objeto con los datos a exportar
-            const exportData = {
-                rankings: gameState.rankings,
-                pokemonData: gameState.pokemonData,
-                timestamps: gameState.timestamps,
-                leftWins: gameState.leftWins,
-                rightWins: gameState.rightWins,
-                exportDate: new Date().toISOString(),
-                version: '1.1'
-            };
-            
-            // Convertir a JSON
-            const jsonData = JSON.stringify(exportData, null, 2);
-            
-            // Crear blob y URL
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            // Crear elemento de enlace para descargar
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `pokemon-rankings-${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
-            document.body.appendChild(a);
-            a.click();
-            
-            // Limpiar
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 0);
-            
-            // Mostrar notificación
-            showNotification('Rankings exportados correctamente');
-            
-            // Cerrar sidebar
-            closeSidebar();
-        }
-
-        // Manejar selección de archivo
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    
-                    // Validar que el archivo tiene el formato correcto
-                    if (!importedData.rankings) {
-                        throw new Error('Formato de archivo inválido');
-                    }
-                    
-                    // Guardar los datos importados temporalmente
-                    gameState.importedRankings = importedData;
-                    
-                    // Mostrar modal para preguntar si reemplazar o combinar
-                    importModal.style.display = 'flex';
-                    
-                } catch (error) {
-                    showNotification('Error al importar: Archivo inválido');
-                    console.error('Error al importar:', error);
-                }
-            };
-            reader.readAsText(file);
-            
-            // Resetear el input para permitir seleccionar el mismo archivo nuevamente
-            event.target.value = '';
-            
-            // Cerrar sidebar
-            closeSidebar();
-        }
-
-        // Importar rankings
-        function importRankings(replace) {
-            if (!gameState.importedRankings) return;
-            
-            if (replace) {
-                // Reemplazar completamente los datos actuales
-                gameState.rankings = gameState.importedRankings.rankings;
-                gameState.pokemonData = gameState.importedRankings.pokemonData || {};
-                gameState.timestamps = gameState.importedRankings.timestamps || {};
-                gameState.leftWins = gameState.importedRankings.leftWins || 0;
-                gameState.rightWins = gameState.importedRankings.rightWins || 0;
-            } else {
-                // Combinar rankings, manteniendo el puntaje más alto para cada Pokémon
-                for (const [name, points] of Object.entries(gameState.importedRankings.rankings)) {
-                    if (!gameState.rankings[name] || gameState.rankings[name] < points) {
-                        gameState.rankings[name] = points;
-                    }
-                }
-                
-                // Combinar datos de Pokémon
-                if (gameState.importedRankings.pokemonData) {
-                    for (const [name, data] of Object.entries(gameState.importedRankings.pokemonData)) {
-                        if (!gameState.pokemonData[name]) {
-                            gameState.pokemonData[name] = data;
-                        } else {
-                            // Mantener la batalla más alta
-                            if ((data.battles || 0) > (gameState.pokemonData[name].battles || 0)) {
-                                gameState.pokemonData[name].battles = data.battles;
-                            }
-                            // Asegurarse de tener imagen y nombre en español
-                            if (!gameState.pokemonData[name].image && data.image) {
-                                gameState.pokemonData[name].image = data.image;
-                            }
-                            if (!gameState.pokemonData[name].spanishName && data.spanishName) {
-                                gameState.pokemonData[name].spanishName = data.spanishName;
-                            }
-                        }
-                    }
-                }
-                
-                // Combinar timestamps (mantener el más antiguo)
-                if (gameState.importedRankings.timestamps) {
-                    for (const [name, timestamp] of Object.entries(gameState.importedRankings.timestamps)) {
-                        if (!gameState.timestamps[name] || gameState.timestamps[name] > timestamp) {
-                            gameState.timestamps[name] = timestamp;
-                        }
-                    }
-                }
-                
-                // Sumar contadores de victorias
-                if (gameState.importedRankings.leftWins) {
-                    gameState.leftWins += gameState.importedRankings.leftWins;
-                }
-                if (gameState.importedRankings.rightWins) {
-                    gameState.rightWins += gameState.importedRankings.rightWins;
-                }
-            }
-            
-            // Actualizar contadores
-            updateCounters();
-            
-            // Actualizar la visualización
-            updateRankingsDisplay();
-            
-            // Actualizar los Pokémon actuales si es necesario
-            if (gameState.currentPokemon.length === 2) {
-                gameState.currentPokemon[0].points = gameState.rankings[gameState.currentPokemon[0].englishName] || 1000;
-                gameState.currentPokemon[1].points = gameState.rankings[gameState.currentPokemon[1].englishName] || 1000;
-                
-                updatePokemonCard(pokemon1Element, gameState.currentPokemon[0]);
-                updatePokemonCard(pokemon2Element, gameState.currentPokemon[1]);
-            }
-            
-            // Cerrar el modal
-            importModal.style.display = 'none';
-            
-            // Limpiar los datos importados
-            gameState.importedRankings = null;
-            
-            // Mostrar notificación
-            showNotification(replace ? 'Rankings reemplazados correctamente' : 'Rankings combinados correctamente');
-        }
-
-        // Mostrar notificación
-        function showNotification(message) {
-            notification.textContent = message;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Iniciar el juego cuando la página carga
-        window.addEventListener('DOMContentLoaded', initGame);
-    </script>
+  <script src="app.js"></script>
 </body>
 </html>
 
