@@ -12,6 +12,7 @@ const gameState = {
   timestamps: {}, // Para guardar cuándo se agregó cada Pokémon al ranking
   battleHistory: [], // Historial de batallas: [{winner: 'pokemon1', loser: 'pokemon2', date: timestamp}]
   gameStarted: false, // Para controlar si el juego ha comenzado
+  isLoading: true, // Para controlar si se están cargando los datos
   stageData: {
     currentStage: 1,
     totalStages: 0,
@@ -19,9 +20,14 @@ const gameState = {
     stagePokemons: [], // Pokémon de la etapa actual
     currentBattle: 0,
     stageBattles: 0, // Total de batallas en la etapa actual
+    completedInitialStages: false, // Indica si ya se completaron las etapas iniciales
+    usedPokemon: new Set(), // Conjunto para rastrear qué Pokémon ya han participado
   },
   allPokemons: [], // Listado de todos los pokémon disponibles (del 1 al 898)
 }
+
+// Modificar la constante de etapas totales a 52
+const TOTAL_INITIAL_STAGES = 52 // 52 etapas iniciales para asegurar que todos los Pokémon participen
 
 // Elementos del DOM
 const pokemon1Element = document.getElementById("pokemon1")
@@ -64,6 +70,9 @@ const INITIAL_POINTS = 1000 // Puntos iniciales para cada Pokémon
 
 // Inicializar el juego
 async function initGame() {
+  // Desactivar el botón de inicio mientras se cargan los datos
+  disableStartButton()
+
   // Inicializar lista de todos los pokémon
   gameState.allPokemons = Array.from({ length: POKEMON_MAX_ID }, (_, i) => i + 1)
 
@@ -105,6 +114,25 @@ async function initGame() {
 
   // Mostrar número total de etapas
   totalStagesElement.textContent = gameState.stageData.totalStages
+
+  // Activar el botón de inicio una vez que se han cargado los datos
+  enableStartButton()
+}
+
+// Función para desactivar el botón de inicio
+function disableStartButton() {
+  startGameBtn.disabled = true
+  startGameBtn.classList.add("disabled")
+  startGameBtn.textContent = "Cargando Pokémon..."
+  gameState.isLoading = true
+}
+
+// Función para activar el botón de inicio
+function enableStartButton() {
+  startGameBtn.disabled = false
+  startGameBtn.classList.remove("disabled")
+  startGameBtn.textContent = "Comenzar Batalla"
+  gameState.isLoading = false
 }
 
 // Precargar datos básicos de Pokémon
@@ -156,6 +184,9 @@ async function precachePokemonData() {
       // Actualizar progreso
       const progress = Math.min(100, Math.round((end / POKEMON_MAX_ID) * 100))
       showNotification(`Cargando Pokémon... ${progress}%`)
+
+      // Actualizar texto del botón con el progreso
+      startGameBtn.textContent = `Cargando Pokémon... ${progress}%`
     }
 
     // Actualizar la UI con los rankings iniciales
@@ -203,9 +234,11 @@ async function fetchPokemonBasicData(id, speciesUrl) {
 
 // Calcular el número total de etapas
 function calculateStages() {
-  // Cada etapa tiene gameState.stageData.pokemonPerStage Pokémon
-  // Esto permite que cada Pokémon participe en al menos una batalla
-  gameState.stageData.totalStages = Math.ceil(POKEMON_MAX_ID / gameState.stageData.pokemonPerStage)
+  // Establecer el número total de etapas iniciales
+  gameState.stageData.totalStages = TOTAL_INITIAL_STAGES
+
+  // Inicializar el conjunto de Pokémon usados
+  gameState.stageData.usedPokemon = new Set()
 
   // Preparar la primera etapa
   prepareStage(1)
@@ -217,19 +250,20 @@ function prepareStage(stageNumber) {
   gameState.stageData.currentStage = stageNumber
   currentStageElement.textContent = stageNumber
 
-  // Calcular qué Pokémon corresponden a esta etapa
-  const startIndex = (stageNumber - 1) * gameState.stageData.pokemonPerStage
-  const endIndex = Math.min(startIndex + gameState.stageData.pokemonPerStage, POKEMON_MAX_ID)
+  // Determinar si estamos en las etapas iniciales o en las aleatorias posteriores
+  const isInitialStage = stageNumber <= TOTAL_INITIAL_STAGES && !gameState.stageData.completedInitialStages
 
-  // Obtener los IDs de Pokémon para esta etapa
-  gameState.stageData.stagePokemons = gameState.allPokemons.slice(startIndex, endIndex)
-
-  // Barajar aleatoriamente los Pokémon de la etapa
-  gameState.stageData.stagePokemons = shuffleArray(gameState.stageData.stagePokemons)
+  // Seleccionar Pokémon para esta etapa
+  if (isInitialStage) {
+    // En las etapas iniciales, aseguramos que todos los Pokémon participen al menos una vez
+    selectPokemonForInitialStage()
+  } else {
+    // En las etapas posteriores, seleccionamos Pokémon completamente al azar
+    selectRandomPokemonForStage()
+  }
 
   // Calculamos el número de batallas para esta etapa
   // En cada batalla participan 2 Pokémon, así que dividimos entre 2
-  // Si hay un número impar, el último Pokémon se queda sin batallar
   gameState.stageData.stageBattles = Math.floor(gameState.stageData.stagePokemons.length / 2)
 
   // Reiniciar contador de batalla actual
@@ -237,6 +271,41 @@ function prepareStage(stageNumber) {
 
   // Actualizar barra de progreso
   updateStageProgress()
+}
+
+// Añadir esta nueva función para seleccionar Pokémon para etapas iniciales
+function selectPokemonForInitialStage() {
+  // Obtener Pokémon que aún no han participado
+  const unusedPokemon = gameState.allPokemons.filter((id) => !gameState.stageData.usedPokemon.has(id))
+
+  // Si quedan suficientes Pokémon sin usar, seleccionamos de ahí
+  if (unusedPokemon.length >= gameState.stageData.pokemonPerStage) {
+    // Barajar y tomar los primeros pokemonPerStage
+    const shuffled = shuffleArray(unusedPokemon)
+    gameState.stageData.stagePokemons = shuffled.slice(0, gameState.stageData.pokemonPerStage)
+  } else {
+    // Si no quedan suficientes sin usar, combinamos los que quedan con algunos aleatorios
+    const shuffledAll = shuffleArray(gameState.allPokemons)
+    const needed = gameState.stageData.pokemonPerStage - unusedPokemon.length
+
+    // Combinamos los no usados con algunos aleatorios
+    gameState.stageData.stagePokemons = [...unusedPokemon, ...shuffledAll.slice(0, needed)]
+  }
+
+  // Marcar estos Pokémon como usados
+  gameState.stageData.stagePokemons.forEach((id) => {
+    gameState.stageData.usedPokemon.add(id)
+  })
+
+  // Barajar para que el orden sea aleatorio
+  gameState.stageData.stagePokemons = shuffleArray(gameState.stageData.stagePokemons)
+}
+
+// Añadir esta nueva función para seleccionar Pokémon aleatorios para etapas posteriores
+function selectRandomPokemonForStage() {
+  // Seleccionar Pokémon completamente al azar
+  const shuffled = shuffleArray(gameState.allPokemons)
+  gameState.stageData.stagePokemons = shuffled.slice(0, gameState.stageData.pokemonPerStage)
 }
 
 // Actualizar la barra de progreso de la etapa
@@ -251,21 +320,54 @@ function updateStageProgress() {
 
 // Reiniciar la etapa actual
 function resetCurrentStage() {
-  prepareStage(gameState.stageData.currentStage)
+  // Mantener el mismo número de etapa pero regenerar los Pokémon
+  if (gameState.stageData.completedInitialStages) {
+    // Si estamos en etapas aleatorias, simplemente seleccionamos nuevos Pokémon al azar
+    selectRandomPokemonForStage()
+  } else {
+    // Si estamos en etapas iniciales, necesitamos quitar estos Pokémon del conjunto de usados
+    gameState.stageData.stagePokemons.forEach((id) => {
+      gameState.stageData.usedPokemon.delete(id)
+    })
+    // Y seleccionar nuevos Pokémon para la etapa
+    selectPokemonForInitialStage()
+  }
+
+  // Reiniciar contador de batalla actual
+  gameState.stageData.currentBattle = 0
+
+  // Actualizar barra de progreso
+  updateStageProgress()
+
+  // Cargar nueva pareja de Pokémon
   loadNewPokemonPair()
-  showNotification("Etapa reiniciada")
+
+  showNotification("Etapa reiniciada con nuevos Pokémon")
   closeSidebar()
 }
 
 // Avanzar a la siguiente etapa
 function advanceToNextStage() {
-  if (gameState.stageData.currentStage < gameState.stageData.totalStages) {
-    prepareStage(gameState.stageData.currentStage + 1)
-    showNotification(`¡Avanzando a la Etapa ${gameState.stageData.currentStage}!`)
-  } else {
-    // Si estamos en la última etapa, volvemos a la primera
+  // Verificar si hemos completado las etapas iniciales
+  if (gameState.stageData.currentStage >= TOTAL_INITIAL_STAGES && !gameState.stageData.completedInitialStages) {
+    // Marcar que hemos completado las etapas iniciales
+    gameState.stageData.completedInitialStages = true
+    showNotification("¡Has completado las 52 etapas iniciales! Ahora comenzarán etapas aleatorias indefinidas.")
+
+    // Reiniciar a la etapa 1 pero en modo aleatorio
     prepareStage(1)
-    showNotification("¡Todas las etapas completadas! Comenzando de nuevo desde la Etapa 1")
+  } else {
+    // Avanzar a la siguiente etapa
+    const nextStage = gameState.stageData.currentStage + 1
+
+    // Si estamos en etapas aleatorias y llegamos al final, volvemos a la etapa 1
+    if (gameState.stageData.completedInitialStages && nextStage > TOTAL_INITIAL_STAGES) {
+      prepareStage(1)
+      showNotification(`¡Ciclo de etapas aleatorias completado! Comenzando nuevo ciclo.`)
+    } else {
+      prepareStage(nextStage)
+      showNotification(`¡Avanzando a la Etapa ${gameState.stageData.currentStage}!`)
+    }
   }
 
   // Cargar nueva pareja de Pokémon
@@ -284,7 +386,7 @@ function shuffleArray(array) {
 
 // Iniciar el juego
 function startGame() {
-  if (gameState.gameStarted) return
+  if (gameState.gameStarted || gameState.isLoading) return
 
   gameState.gameStarted = true
   startGameBtn.style.display = "none"
@@ -730,6 +832,8 @@ function exportRankings() {
     stageData: {
       currentStage: gameState.stageData.currentStage,
       currentBattle: gameState.stageData.currentBattle,
+      completedInitialStages: gameState.stageData.completedInitialStages,
+      usedPokemon: Array.from(gameState.stageData.usedPokemon), // Convertir Set a Array para JSON
     },
     exportDate: new Date().toISOString(),
     version: "2.0",
@@ -813,6 +917,17 @@ function importRankings(replace) {
     if (gameState.importedRankings.stageData) {
       gameState.stageData.currentStage = gameState.importedRankings.stageData.currentStage || 1
       gameState.stageData.currentBattle = gameState.importedRankings.stageData.currentBattle || 0
+
+      // Restaurar el estado de las etapas iniciales
+      if (gameState.importedRankings.stageData.completedInitialStages !== undefined) {
+        gameState.stageData.completedInitialStages = gameState.importedRankings.stageData.completedInitialStages
+      }
+
+      // Restaurar el conjunto de Pokémon usados
+      if (gameState.importedRankings.stageData.usedPokemon) {
+        gameState.stageData.usedPokemon = new Set(gameState.importedRankings.stageData.usedPokemon)
+      }
+
       prepareStage(gameState.stageData.currentStage)
     }
   } else {
@@ -882,7 +997,7 @@ function combineRankings() {
     }
   }
 
-  // Recrear las batallas del archivo importado
+  // Recrear las batallas del archivo importado con los puntos actuales
   if (gameState.importedRankings.battleHistory && gameState.importedRankings.battleHistory.length > 0) {
     // Ordenar batallas por fecha
     const sortedBattles = [...gameState.importedRankings.battleHistory].sort((a, b) => a.date - b.date)
@@ -891,7 +1006,7 @@ function combineRankings() {
     for (const battle of sortedBattles) {
       // Verificar si tenemos ambos Pokémon en nuestros rankings
       if (currentRankings[battle.winner] !== undefined && currentRankings[battle.loser] !== undefined) {
-        // Simular la batalla con los puntajes actuales
+        // Simular la batalla con los puntajes actuales (no los del historial)
         simulateBattle(currentRankings, battle.winner, battle.loser)
 
         // No incrementamos los contadores de batallas aquí porque ya los sumamos arriba
@@ -928,6 +1043,27 @@ function combineRankings() {
 
     // Añadir nuevas batallas al historial
     gameState.battleHistory = [...gameState.battleHistory, ...newBattles]
+  }
+
+  // Combinar información de etapas
+  if (gameState.importedRankings.stageData) {
+    // Si no hemos completado las etapas iniciales pero el archivo importado sí, actualizamos
+    if (!gameState.stageData.completedInitialStages && gameState.importedRankings.stageData.completedInitialStages) {
+      gameState.stageData.completedInitialStages = true
+    }
+
+    // Combinar el conjunto de Pokémon usados
+    if (gameState.importedRankings.stageData.usedPokemon) {
+      // Convertir el array a Set si es necesario
+      const importedUsedPokemon = Array.isArray(gameState.importedRankings.stageData.usedPokemon)
+        ? new Set(gameState.importedRankings.stageData.usedPokemon)
+        : gameState.importedRankings.stageData.usedPokemon
+
+      // Añadir los Pokémon usados del archivo importado a nuestro conjunto
+      importedUsedPokemon.forEach((id) => {
+        gameState.stageData.usedPokemon.add(id)
+      })
+    }
   }
 }
 
